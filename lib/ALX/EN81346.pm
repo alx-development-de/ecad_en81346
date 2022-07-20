@@ -1,34 +1,43 @@
+#
+# ALX::EN81346 - Basic function implementation to handle
+# identifier string according the EN81346 specification.
+#
 package ALX::EN81346;
+
+require Exporter;
+our @ISA = qw(Exporter);
+our @EXPORT = qw(
+					segments
+				);
+
 our $VERSION = '0.01';
 
 use strict;
 use warnings;
-
 use Carp;
-use Log::Log4perl qw(get_logger :levels);
 
-sub new($$;) {
-    my $class = shift();
-    my $source_string = shift();
+use Data::Dumper;
 
-    my $self = {
-        _string      => $source_string,
-        logger       => get_logger("EN81346")
-    };
+sub segments($;) {
+	my $string = shift();
+	print("To Analyze: [$string]\n");
 
-	$self->{logger}->debug("Identifier parsing for [$source_string] initialized");
+	# Splitting the string into segments according the prefix
+	print("Segmenting 1:\n");
+	my @matches = $string =~ m/([+=-]+[0-9a-zA-Z.]+)/gi;
+	print Dumper @matches;
 
-    bless $self, $class;
-    return $self;
+	# Looking for subsegments in the separate segments and splitting
+	# them into individual segments
+	print("Segmenting 2:\n");
+	foreach my $segment (@matches){
+		my @subsegments = $segment =~ m/([+=-]+)([0-9a-zA-Z.]+)+/gi;
+		# TODO: Subsegments must be split if the dot-notation is used
+		print Dumper @subsegments;
+	}
+
+	print("After\n");
+	return "OK";
 }
-
-# This function returns true, if a lock file for the project is existing. It is not proofed,
-# if the lock is writable for the current user. Therefore use the function "is_writable".
-sub get_string {
-    my $self = shift();
-
-    return $self->{_string};
-}
-
 #------------------------------------------------------------------------------------------------
 1;
