@@ -16,28 +16,58 @@ use strict;
 use warnings;
 use Carp;
 
-use Data::Dumper;
+use Log::Log4perl ();
+use Log::Log4perl::Level ();
+use Data::Dumper::Perltidy;
+
+# Initializing the logging if not already specified by the application
+# which uses the module
+if (not Log::Log4perl->initialized()) {
+        Log::Log4perl->easy_init( Log::Log4perl::Level::to_priority( 'OFF' ) );
+    }
 
 sub segments($;) {
 	my $string = shift();
-	print("To Analyze: [$string]\n");
+
+	my $logger = Log::Log4perl->get_logger();
+	$logger->debug("Segmenting string value: [$string]");
+
+	# Initializing the returned hash structure
+	my %segments;
 
 	# Splitting the string into segments according the prefix
-	print("Segmenting 1:\n");
 	my @matches = $string =~ m/([+=-]+[0-9a-zA-Z.]+)/gi;
-	print Dumper @matches;
 
 	# Looking for subsegments in the separate segments and splitting
 	# them into individual segments
-	print("Segmenting 2:\n");
-	foreach my $segment (@matches){
-		my @subsegments = $segment =~ m/([+=-]+)([0-9a-zA-Z.]+)+/gi;
-		# TODO: Subsegments must be split if the dot-notation is used
-		print Dumper @subsegments;
-	}
+	foreach (@matches){
+		my ($identifier, $value) = $_ =~ m/([+=-]+)([0-9a-zA-Z.]+)+/gi;
+		#print "Segments identified   : [$identifier] - [$string]\n";
 
-	print("After\n");
-	return "OK";
+		# Subsegments must be split if the dot-notation is used
+		my @subsegments = $value =~ m/([0-9a-zA-Z]+)\.?/gi;
+
+		# Building the structure for each identifier in a key-value pairing.
+		# As key the identifier is used and the value is an array with the
+		# sorted values as array
+		$segments{$identifier} = [] unless defined $segments{$identifier};
+		$segments{$identifier} = [@{$segments{$identifier}}, @subsegments];
+	}
+	# Returning the segment structure
+	return \%segments;
 }
+
+sub to_string($;) {
+	# TODO: Not sure if this is the correct way to handle hash references
+	my %segments = %{shift()};
+
+	my $string_representation = '';
+	# TODO: Need to implement some sorting algorithm for the identifiers
+	foreach my $key (keys(%segments)){
+		$string_representation .= $key.join('.', @{$segments{$key}})
+	};
+	return $string_representation;
+}
+
 #------------------------------------------------------------------------------------------------
 1;

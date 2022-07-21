@@ -3,18 +3,55 @@ use strict;
 use warnings;
 use Test::More;
 
-use ALX::EN81346;
-
 use Log::Log4perl;
+Log::Log4perl->easy_init( Log::Log4perl::Level::to_priority( 'OFF' ) );
 
-Log::Log4perl->init("conf/log_test.ini");
+require_ok( 'ALX::EN81346' );
+# Testing the simple structure detection without duplicate identifiers (multi-level structures)
+is_deeply(ALX::EN81346::segments('=100+110-X1'), {
+    '='  => [ '100' ],
+    '+'  => [ '110' ],
+    '-'  => [ 'X1' ]
+}, "EN81346 Simple structure");
+is_deeply(ALX::EN81346::segments('=100+110-X2'), {
+    '='  => [ '100' ],
+    '+'  => [ '110' ],
+    '-'  => [ 'X2' ]
+}, "EN81346 Simple structure");
+# Testing multi-level structures with different approaches
+is_deeply(ALX::EN81346::segments('==AbC910==23AX=113=aBc+1CC01+CAB-X9-7'), {
+    '==' => [ 'AbC910', '23AX' ],
+    '='  => [ '113', 'aBc' ],
+    '+'  => [ '1CC01', 'CAB' ],
+    '-'  => [ 'X9', '7' ]
+}, "EN81346 deep structure with multiple identifiers")
+    || diag explain ALX::EN81346::segments('==AbC910==23AX=113=aBc+1CC01+CAB-X9-7');
+is_deeply(ALX::EN81346::segments('==AbC910.23AX=113.aBc+1CC01.CAB-X9.7'), {
+    '==' => [ 'AbC910', '23AX' ],
+    '='  => [ '113', 'aBc' ],
+    '+'  => [ '1CC01', 'CAB' ],
+    '-'  => [ 'X9', '7' ]
+}, "EN81346 deep structure with dot separator")
+    || diag explain ALX::EN81346::segments('==AbC910.23AX=113.aBc+1CC01.CAB-X9.7');
+is_deeply(ALX::EN81346::segments('==AbC910+1CC01=113+CAB-X9==23AX-7=aBc'), {
+    '==' => [ 'AbC910', '23AX' ],
+    '='  => [ '113', 'aBc' ],
+    '+'  => [ '1CC01', 'CAB' ],
+    '-'  => [ 'X9', '7' ]
+}, "EN81346 deep structure with scrambled identifiers")
+    || diag explain ALX::EN81346::segments('==AbC910+1CC01=113+CAB-X9==23AX-7=aBc');
 
-#my $interpreter = ALX::EN81346->new("=100+200-300");
-
-ok(ALX::EN81346::segments('==FZ910=113++CAB+1CC01-X8.1:13') eq "OK");
-ok(ALX::EN81346::segments('==AbC910=113+1CC01.CAB-X9.1:13') eq "OK");
-ok(ALX::EN81346::segments('=FUNC+1MCC01.CAB-X9.1:13') eq "OK");
-ok(ALX::EN81346::segments('=100+110-X1') eq "OK");
-ok(ALX::EN81346::segments('=100+110-X2') eq "OK");
+TODO: {
+    local $TODO = "The connector pin must also been detected with the colon as identifier";
+    is_deeply(ALX::EN81346::segments('==FZ910=113++CAB+1CC01-X8.1:13'), {
+        '==' => [ 'FZ910' ],
+        '++' => [ 'CAB' ],
+        '='  => [ '113' ],
+        '+'  => [ '1CC01' ],
+        '-'  => [ 'X8', '1' ],
+        ':'  => [ '13' ]
+    }, "Connector pin detection with colon seperator")
+        || diag explain ALX::EN81346::segments('==FZ910=113++CAB+1CC01-X8.1:13');
+}
 
 done_testing();
