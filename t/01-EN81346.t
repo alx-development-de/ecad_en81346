@@ -2,12 +2,21 @@
 use strict;
 use warnings;
 use Test::More;
-use Data::Dumper;
 
 use Log::Log4perl;
 Log::Log4perl->easy_init( Log::Log4perl::Level::to_priority( 'OFF' ) );
 
 require_ok( 'ALX::EN81346' );
+# Testing the validity check for given ids as string
+ok( ALX::EN81346::is_valid('-X12'), "ID validity check");
+ok( ALX::EN81346::is_valid('=100+CAB-X12'), "ID validity check");
+ok( ALX::EN81346::is_valid('===AGDDGS'), "ID validity check");
+ok( ALX::EN81346::is_valid('=X12+AZT-X11.13'), "ID validity check");
+ok( ALX::EN81346::is_valid('=X12+AZT-X11:13'), "ID validity check");
+ok( !ALX::EN81346::is_valid('X12'), "ID validity check");
+ok( !ALX::EN81346::is_valid('=4711-X12@17'), "ID validity check");
+ok( !ALX::EN81346::is_valid('=X12+AZT-X11::13'), "ID validity check");
+
 # Testing the simple structure detection without duplicate identifiers (multi-level structures)
 is_deeply( ALX::EN81346::segments('=100+110-X1'), {
     '='  => [ '100' ],
@@ -41,19 +50,15 @@ is_deeply( ALX::EN81346::segments('==AbC910+1CC01=113+CAB-X9==23AX-7=aBc'), {
     '-'  => [ 'X9', '7' ]
 }, "EN81346 deep structure with scrambled identifiers")
     || diag explain ALX::EN81346::segments('==AbC910+1CC01=113+CAB-X9==23AX-7=aBc');
-
-TODO: {
-    local $TODO = "The connector pin must also been detected with the colon as identifier";
-    is_deeply( ALX::EN81346::segments('==FZ910=113++CAB+1CC01-X8.1:13'), {
-        '==' => [ 'FZ910' ],
-        '++' => [ 'CAB' ],
-        '='  => [ '113' ],
-        '+'  => [ '1CC01' ],
-        '-'  => [ 'X8', '1' ],
-        ':'  => [ '13' ]
-    }, "Connector pin detection with colon seperator")
-        || diag explain ALX::EN81346::segments('==FZ910=113++CAB+1CC01-X8.1:13');
-}
+is_deeply( ALX::EN81346::segments('==FZ910=113++CAB+1CC01-X8.1:13'), {
+    '==' => [ 'FZ910' ],
+    '++' => [ 'CAB' ],
+    '='  => [ '113' ],
+    '+'  => [ '1CC01' ],
+    '-'  => [ 'X8', '1' ],
+    ':'  => [ '13' ]
+}, "Connector pin detection with colon seperator")
+    || diag explain ALX::EN81346::segments('==FZ910=113++CAB+1CC01-X8.1:13');
 
 # Testing the sort implementation of the ID sorting
 my @tests = (
