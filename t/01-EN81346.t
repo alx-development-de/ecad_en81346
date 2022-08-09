@@ -18,39 +18,39 @@ ok( !ALX::EN81346::is_valid('=4711-X12@17'), "ID validity check");
 ok( !ALX::EN81346::is_valid('=X12+AZT-X11::13'), "ID validity check");
 
 # Testing the simple structure detection without duplicate identifiers (multi-level structures)
-is_deeply( ALX::EN81346::segments('=100+110-X1'), {
+is_deeply( {ALX::EN81346::segments('=100+110-X1')}, {
     '='  => [ '100' ],
     '+'  => [ '110' ],
     '-'  => [ 'X1' ]
 }, "EN81346 Simple structure");
-is_deeply( ALX::EN81346::segments('=100+110-X2'), {
+is_deeply( {ALX::EN81346::segments('=100+110-X2')}, {
     '='  => [ '100' ],
     '+'  => [ '110' ],
     '-'  => [ 'X2' ]
 }, "EN81346 Simple structure");
 # Testing multi-level structures with different approaches
-is_deeply( ALX::EN81346::segments('==AbC910==23AX=113=aBc+1CC01+CAB-X9-7'), {
+is_deeply( {ALX::EN81346::segments('==AbC910==23AX=113=aBc+1CC01+CAB-X9-7')}, {
     '==' => [ 'AbC910', '23AX' ],
     '='  => [ '113', 'aBc' ],
     '+'  => [ '1CC01', 'CAB' ],
     '-'  => [ 'X9', '7' ]
 }, "EN81346 deep structure with multiple identifiers")
     || diag explain ALX::EN81346::segments('==AbC910==23AX=113=aBc+1CC01+CAB-X9-7');
-is_deeply( ALX::EN81346::segments('==AbC910.23AX=113.aBc+1CC01.CAB-X9.7'), {
+is_deeply( {ALX::EN81346::segments('==AbC910.23AX=113.aBc+1CC01.CAB-X9.7')}, {
     '==' => [ 'AbC910', '23AX' ],
     '='  => [ '113', 'aBc' ],
     '+'  => [ '1CC01', 'CAB' ],
     '-'  => [ 'X9', '7' ]
 }, "EN81346 deep structure with dot separator")
     || diag explain ALX::EN81346::segments('==AbC910.23AX=113.aBc+1CC01.CAB-X9.7');
-is_deeply( ALX::EN81346::segments('==AbC910+1CC01=113+CAB-X9==23AX-7=aBc'), {
+is_deeply( {ALX::EN81346::segments('==AbC910+1CC01=113+CAB-X9==23AX-7=aBc')}, {
     '==' => [ 'AbC910', '23AX' ],
     '='  => [ '113', 'aBc' ],
     '+'  => [ '1CC01', 'CAB' ],
     '-'  => [ 'X9', '7' ]
 }, "EN81346 deep structure with scrambled identifiers")
     || diag explain ALX::EN81346::segments('==AbC910+1CC01=113+CAB-X9==23AX-7=aBc');
-is_deeply( ALX::EN81346::segments('==FZ910=113++CAB+1CC01-X8.1:13'), {
+is_deeply( {ALX::EN81346::segments('==FZ910=113++CAB+1CC01-X8.1:13')}, {
     '==' => [ 'FZ910' ],
     '++' => [ 'CAB' ],
     '='  => [ '113' ],
