@@ -73,10 +73,15 @@ structure like this:
 
 sub segments($;) {
     my $string = shift();
-	Log::Log4perl->get_logger->debug("Segmenting string value: [$string]");
-
     # Initializing the returned hash structure
     my %segments;
+
+    unless(length($string)) {
+        Log::Log4perl->get_logger->warn("Empty string passed to subroutine, exiting without segmenting");
+        return;
+    }
+
+    Log::Log4perl->get_logger->debug("Segmenting string value: [$string]");
 
     # Splitting the string into segments according the prefix
     my @matches = $string =~ m/([+:=-]+[0-9a-zA-Z.]+)/gi;
@@ -188,7 +193,7 @@ Passing the following array:
 
 Will produce the following returned array:
 
-    [='AN1', '++SEG01', '+CAB', '-S11']
+    ['=AN1', '++SEG01', '+CAB', '-S11']
 
 =cut
 
