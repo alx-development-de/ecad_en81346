@@ -22,6 +22,8 @@ use Carp;
 use Log::Log4perl ();
 use Log::Log4perl::Level ();
 
+use Data::Dumper;
+
 =pod
 
 =encoding utf8
@@ -100,6 +102,57 @@ sub segments($;) {
     }
     # Returning the segment structure
     return %segments;
+}
+
+=pod
+
+=head2 base($string, $string)
+
+While working with the references it is very useful to have access to all
+aspects directly. Therefore this function is splitting the complete reference
+string into its aspect elements.
+
+It returns a hash, with the identifier as keys and an array containing all
+subelements for the identifier as value.
+
+For example, the reference string "=112.345+CAB.EL01-X11" will result in a
+structure like this:
+
+    {
+        '=' => ['112', '345'],
+        '+' => ['CAB', 'EL01'],
+        '-' => [X11]
+    }
+
+=cut
+
+sub base($$;) {
+    my($base, $reference) = @_;
+
+    my %base_segments = segments($base);
+    my %reference_segments = segments($reference);
+    my %result_segments = ();
+
+    foreach my $identifier (keys(%reference_segments)) {
+        my ($base_string, $reference_string);
+        $reference_string = join('.', @{$reference_segments{$identifier}});
+        if( defined($base_segments{$identifier}) ) {
+            $base_string = join('.', @{$base_segments{$identifier}});
+            Log::Log4perl->get_logger->debug("Comparing Identifier [$identifier] ".
+                "on base [$base_string] and reference ".
+                "[$reference_string]");
+            # Adding the segment to the result string, if not equal to the reference
+            # in the base
+            $result_segments{$identifier} = $reference_segments{$identifier}
+                unless ($base_string eq $reference_string);
+        }
+        else {
+            Log::Log4perl->get_logger->debug("Not contained in base reference [${identifier}${reference_string}]");
+            $result_segments{$identifier} = $reference_segments{$identifier};
+        }
+    }
+    # Returning the different elements in segment structure
+    return &to_string(\%result_segments);
 }
 
 =pod
