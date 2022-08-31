@@ -13,7 +13,7 @@ our @EXPORT = qw(
     is_valid
 );
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use strict;
 use warnings;
@@ -86,16 +86,16 @@ sub segments($;) {
     Log::Log4perl->get_logger->debug("Segmenting string value: [$string]");
 
     # Splitting the string into segments according the prefix
-    my @matches = $string =~ m/([+:=-]+[0-9a-zA-Z.]+)/gi;
+    my @matches = $string =~ m/([+:=-]+[0-9a-zA-Z._]+)/gi;
 
     # Looking for subsegments in the separate segments and splitting
     # them into individual segments
     foreach (@matches) {
-        my ($identifier, $value) = $_ =~ m/([+:=-]+)([0-9a-zA-Z.]+)+/gi;
+        my ($identifier, $value) = $_ =~ m/([+:=-]+)([0-9a-zA-Z._]+)+/gi;
         #print "Segments identified   : [$identifier] - [$string]\n";
 
         # Subsegments must be split if the dot-notation is used
-        my @subsegments = ( $value =~ m/([0-9a-zA-Z]+)\.?/gi );
+        my @subsegments = ( $value =~ m/([0-9a-zA-Z_]+)\.?/gi );
 
         # Building the structure for each identifier
         %segments = concat( \%segments, $identifier, \@subsegments );
@@ -229,7 +229,7 @@ the IEC 81346 standard.
 =cut
 
 sub is_valid($;) {
-    return $_[0] =~ m/^(([+=-]+|:)[0-9a-zA-Z.]+)+$/gi;
+    return $_[0] =~ m/^(([+=-]+|:)[0-9a-zA-Z._]+)+$/gi;
 }
 
 =pod
