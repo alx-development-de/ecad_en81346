@@ -6,12 +6,7 @@ package ALX::EN81346;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(
-    segments,
-    sort,
-    concat,
-    is_valid
-);
+our @EXPORT = qw(segments sort concat is_valid);
 
 our $VERSION = '0.02';
 
@@ -21,8 +16,6 @@ use Carp;
 
 use Log::Log4perl ();
 use Log::Log4perl::Level ();
-
-use Data::Dumper;
 
 =pod
 
@@ -42,14 +35,14 @@ several functions to check and manipulate reference strings.
 # Initializing the logging if not already specified by the application
 # which uses the module
 BEGIN {
-	if (not Log::Log4perl->initialized()) {
-    	Log::Log4perl->easy_init(Log::Log4perl::Level::to_priority('OFF'));
-	}
+    if (not Log::Log4perl->initialized()) {
+        Log::Log4perl->easy_init(Log::Log4perl::Level::to_priority( 'WARN' ));
+    }
 }
 
 # The ID prefixes is used to check if the ids are valid and to
 # configure the sort order for the string representation
-my %id_prefixes = ( ':' => 0, '-' => 1, '+' => 2, '=' => 3 );
+my %id_prefixes = (':' => 0, '-' => 1, '+' => 2, '=' => 3);
 
 =pod
 
@@ -78,12 +71,12 @@ sub segments($;) {
     # Initializing the returned hash structure
     my %segments;
 
-    unless(length($string)) {
+    unless (length($string)) {
         Log::Log4perl->get_logger->warn("Empty string passed to subroutine, exiting without segmenting");
         return;
     }
 
-    Log::Log4perl->get_logger->debug("Segmenting string value: [$string]");
+    Log::Log4perl->get_logger->trace("Segmenting string value: [$string]");
 
     # Splitting the string into segments according the prefix
     my @matches = $string =~ m/([+:=-]+[0-9a-zA-Z._]+)/gi;
@@ -92,13 +85,20 @@ sub segments($;) {
     # them into individual segments
     foreach (@matches) {
         my ($identifier, $value) = $_ =~ m/([+:=-]+)([0-9a-zA-Z._]+)+/gi;
-        #print "Segments identified   : [$identifier] - [$string]\n";
+
+        # Removing all elements from the identifier which do not match with the last
+        # character of the identifier. This is to avoid identifier with multiple
+        # characters. See also  #6
+        my $identifier_char = substr($identifier, -1);
+        $identifier =~ s/^[^$identifier_char]//;
+
+        Log::Log4perl->get_logger->trace("Segments id:[$identifier] val:[$value] detected from [$string]");
 
         # Subsegments must be split if the dot-notation is used
-        my @subsegments = ( $value =~ m/([0-9a-zA-Z_]+)\.?/gi );
+        my @subsegments = ($value =~ m/([0-9a-zA-Z_]+)\.?/gi);
 
         # Building the structure for each identifier
-        %segments = concat( \%segments, $identifier, \@subsegments );
+        %segments = concat(\%segments, $identifier, \@subsegments);
     }
     # Returning the segment structure
     return %segments;
@@ -127,7 +127,7 @@ structure like this:
 =cut
 
 sub base($$;) {
-    my($base, $reference) = @_;
+    my ($base, $reference) = @_;
 
     my %base_segments = segments($base);
     my %reference_segments = segments($reference);
@@ -136,10 +136,10 @@ sub base($$;) {
     foreach my $identifier (keys(%reference_segments)) {
         my ($base_string, $reference_string);
         $reference_string = join('.', @{$reference_segments{$identifier}});
-        if( defined($base_segments{$identifier}) ) {
+        if (defined($base_segments{$identifier})) {
             $base_string = join('.', @{$base_segments{$identifier}});
-            Log::Log4perl->get_logger->debug("Comparing Identifier [$identifier] ".
-                "on base [$base_string] and reference ".
+            Log::Log4perl->get_logger->trace("Comparing Identifier [$identifier] " .
+                "on base [$base_string] and reference " .
                 "[$reference_string]");
             # Adding the segment to the result string, if not equal to the reference
             # in the base
@@ -147,7 +147,7 @@ sub base($$;) {
                 unless ($base_string eq $reference_string);
         }
         else {
-            Log::Log4perl->get_logger->debug("Not contained in base reference [${identifier}${reference_string}]");
+            Log::Log4perl->get_logger->trace("Not contained in base reference [${identifier}${reference_string}]");
             $result_segments{$identifier} = $reference_segments{$identifier};
         }
     }
@@ -174,11 +174,11 @@ Results in the following segment string:
 =cut
 
 sub concat {
-    my ( $segments_ref, $identifier, $subsegments_ref) = @_;
+    my ($segments_ref, $identifier, $subsegments_ref) = @_;
     my %segments = %{$segments_ref};
 
-    foreach my $subsegment ( @$subsegments_ref ) {
-        Log::Log4perl->get_logger->debug("Adding [$subsegment] to the identifier [$identifier] in concat");
+    foreach my $subsegment (@$subsegments_ref) {
+        Log::Log4perl->get_logger->trace("Adding [$subsegment] to the identifier [$identifier] in concat");
 
         # Building the structure for each identifier in a key-value pairing.
         # As key the identifier is used and the value is an array with the
@@ -209,11 +209,20 @@ Will result in the following string:
 =cut
 
 sub to_string($;) {
-    # TODO: Not sure if this is the correct way to handle hash references
-    my %segments = %{shift()};
+    my $args = shift();
+    my %segments;
+
+    # Checking, whether the passed argument is a reference
+    # or a string.
+    if (ref($args) eq 'HASH') {
+        %segments = %{$args};
+    }
+    else {
+        %segments = &segments($args);
+    }
 
     my $string_representation = '';
-    foreach my $key (ALX::EN81346::sort(keys(%segments))) {
+    foreach my $key (&sort(keys(%segments))) {
         $string_representation .= $key . join('.', @{$segments{$key}})
     };
     return $string_representation;
@@ -257,36 +266,39 @@ sub sort {
 
 # compare two numbers
 sub compare_id {
-    my( $first, $second ) = ( $a, $b );
+    my ($first, $second) = ($a, $b);
 
-	Log::Log4perl->get_logger->debug("Comparing input $first and $second");
+    Log::Log4perl->get_logger->trace("Comparing input $first and $second");
 
     # Transforming the literals to numeric values to sort them using
     # simple number comparison
-	if ( $first =~ m/([+:=-]).*/g ) {
-        $first = $id_prefixes{$1} +  length($first) * 0.001;
-        Log::Log4perl->get_logger->debug('Result of $x $1: '."[$1]->[$first]");
-    } else {
+    if ($first =~ m/([+:=-]).*/g) {
+        $first = $id_prefixes{$1} + length($first) * 0.001;
+        Log::Log4perl->get_logger->trace('Result of $x $1: ' . "[$1]->[$first]");
+    }
+    else {
         carp "Not a valid ID provided for comparison: [$first]";
     }
 
-	if ( $second =~ m/([:+=-]).*/g ) {
+    if ($second =~ m/([:+=-]).*/g) {
         $second = $id_prefixes{$1} + length($second) * 0.001;
-        Log::Log4perl->get_logger->debug('Result of $y $1: '."[$1]->[$second]");
-    } else {
+        Log::Log4perl->get_logger->trace('Result of $y $1: ' . "[$1]->[$second]");
+    }
+    else {
         carp "Not a valid ID provided for comparison: [$second]";
     }
 
     # Doing the comparison if the transformation has been successfully finished
-    if( defined($first) && defined($second) ) {
-        Log::Log4perl->get_logger->debug("Comparing $first and $second");
+    if (defined($first) && defined($second)) {
+        Log::Log4perl->get_logger->trace("Comparing $first and $second");
 
         # Doing the comparison
-        if    ( $first > $second ) { return -1; }
-        elsif ( $first < $second ) { return  1; }
-        elsif ( $first == $second ) { return 0; }
+        if ($first > $second) {return -1;}
+        elsif ($first < $second) {return 1;}
+        elsif ($first == $second) {return 0;}
 
-    } else {
+    }
+    else {
         croak "ID Comparison failed!";
     }
 }
