@@ -36,7 +36,7 @@ several functions to check and manipulate reference strings.
 # which uses the module
 BEGIN {
     if (not Log::Log4perl->initialized()) {
-        Log::Log4perl->easy_init(Log::Log4perl::Level::to_priority( 'WARN' ));
+        Log::Log4perl->easy_init(Log::Log4perl::Level::to_priority('WARN'));
     }
 }
 
@@ -89,6 +89,7 @@ sub segments($;) {
         # Removing all elements from the identifier which do not match with the last
         # character of the identifier. This is to avoid identifier with multiple
         # characters. See also  #6
+        # TODO: If the connection point is marked with an identifier character (e.g. + or -) it fails!
         my $identifier_char = substr($identifier, -1);
         $identifier =~ s/^[^$identifier_char]//;
 
@@ -192,7 +193,7 @@ sub concat {
 
 =pod
 
-=head2 to_string($segments)
+=head2 to_string($;$)
 
 This function returns the string representation of the segment structure given
 by the $segments reference. The string is ordered by the identifier and uses
@@ -206,10 +207,22 @@ Will result in the following string:
 
     ==200.ABC=A1.23.100+200-300
 
+As parameter you may pass a hash reference to a segments hash as first parameter
+or alternative a string, which is internally converted to it's segments hash.
+
+As second parameter an optional identifier may be supplied. if this value is provided
+only the segment identified by this is returned as string.
+
+    my $input_string = "==200=A1.23=100==ABC+200-300";
+    print(ALX::EN81346::to_string($input_string, '=='));
+
+Will result in the following string:
+
+    ==200.ABC
 =cut
 
-sub to_string($;) {
-    my $args = shift();
+sub to_string($;$) {
+    my ($args, $identifier) = @_;
     my %segments;
 
     # Checking, whether the passed argument is a reference
@@ -223,6 +236,7 @@ sub to_string($;) {
 
     my $string_representation = '';
     foreach my $key (&sort(keys(%segments))) {
+        if ($identifier && $key ne $identifier) {next;}
         $string_representation .= $key . join('.', @{$segments{$key}})
     };
     return $string_representation;
