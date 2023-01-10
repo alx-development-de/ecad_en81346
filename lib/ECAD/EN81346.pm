@@ -1,8 +1,8 @@
 #
-# ALX::EN81346 - Basic function implementation to handle
+# ECAD::EN81346 - Basic function implementation to handle
 # identifier string according the EN81346 specification.
 #
-package ALX::EN81346;
+package ECAD::EN81346;
 
 require Exporter;
 our @ISA = qw(Exporter);
