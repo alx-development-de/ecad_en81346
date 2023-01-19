@@ -1,3 +1,10 @@
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/alx-development-de/ecad_en81346)
+![GitHub](https://img.shields.io/github/license/alx-development-de/ecad_en81346)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/y/alx-development-de/ecad_en81346)
+![GitHub last commit](https://img.shields.io/github/last-commit/alx-development-de/ECAD_EN81346)
+![GitHub issues](https://img.shields.io/github/issues-raw/alx-development-de/ecad_en81346)
+![GitHub closed issues](https://img.shields.io/github/issues-closed-raw/alx-development-de/ecad_en81346)
+
 # E-CAD
 
 Tools for electrical engineering issues. This is a library, which is able
