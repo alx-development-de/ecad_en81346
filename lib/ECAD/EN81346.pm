@@ -237,7 +237,58 @@ sub to_string($;$) {
     my $string_representation = '';
     foreach my $key (&sort(keys(%segments))) {
         if ($identifier && $key ne $identifier) {next;}
-        $string_representation .= $key . join('.', @{$segments{$key}})
+        $string_representation .= $key . join('.', @{$segments{$key}});
+    };
+    return $string_representation;
+}
+
+sub to_string2($;$) {
+    my ($args, $identifier) = @_;
+    my %segments;
+
+    # Checking, whether the passed argument is a reference
+    # or a string.
+    if (ref($args) eq 'HASH') {
+        %segments = %{$args};
+    }
+    else {
+        %segments = &segments($args);
+    }
+
+    my $string_representation = '';
+    foreach my $key (&sort(keys(%segments))) {
+        if ($identifier && $key ne $identifier) {next;}
+        $string_representation .= $key . join($key, @{$segments{$key}});
+    };
+    return $string_representation;
+}
+
+sub to_string3($;$) {
+    my ($args, $identifier) = @_;
+    my %segments;
+
+    # Checking, whether the passed argument is a reference
+    # or a string.
+    if (ref($args) eq 'HASH') {
+        %segments = %{$args};
+    }
+    else {
+        %segments = &segments($args);
+    }
+
+    my $string_representation = '';
+    foreach my $key (&sort(keys(%segments))) {
+        if ($identifier && $key ne $identifier) {next;}
+        # Building the string representation in mixed mode. This means, if an element
+        # only contains numbers it will divides by a dot instead the key delimiter.
+        # The $level counter is used to ensure, the first element of a representation is always
+        # leading by the full delimiter and not the dot notation
+        my $level = 0;
+        foreach my $segment ( @{$segments{$key}} ) {
+            my $delimiter = $segment =~ m/^[0-9]+$/ && $level > 0 ? '.' : $key;
+            $string_representation .= $delimiter . $segment;
+            $level++;
+        }
     };
     return $string_representation;
 }

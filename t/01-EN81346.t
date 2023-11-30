@@ -69,6 +69,16 @@ is(ECAD::EN81346::to_string('==FZ910==Z2=113++CAB+1CC01'), '==FZ910.Z2=113++CAB+
 is(ECAD::EN81346::to_string('==FZ910==Z2=113++CAB+1CC01', '='), '=113', 'to_string String building testing');
 is(ECAD::EN81346::to_string('==FZ910==Z2=113++CAB+1CC01', '=='), '==FZ910.Z2', 'to_string String building testing');
 
+# The full mode to_string
+is(ECAD::EN81346::to_string2('==FZ910==Z2=113++CAB+1C+C01+1'), '==FZ910==Z2=113++CAB+1C+C01+1', 'to_string2 String building testing');
+is(ECAD::EN81346::to_string2('==FZ910==Z2=113++CAB+1CC01', '='), '=113', 'to_string2 String building testing');
+is(ECAD::EN81346::to_string2('==FZ910==Z2=113++CAB+1CC01', '=='), '==FZ910==Z2', 'to_string2 String building testing');
+
+# The mixed mode to_string
+is(ECAD::EN81346::to_string3('==FZ910==Z2=113++CAB+1C+C01+1'), '==FZ910==Z2=113++CAB+1C+C01.1', 'to_string3 String building testing');
+is(ECAD::EN81346::to_string3('==FZ910==Z2=113.4++CAB+1C+C01+1', '='), '=113.4', 'to_string3 String building testing');
+is(ECAD::EN81346::to_string3('==FZ910==2=113++CAB+1C+C01+1', '=='), '==FZ910.2', 'to_string3 String building testing');
+
 # Testing the sort implementation of the ID sorting
 my @tests = (
     {
