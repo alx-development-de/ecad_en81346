@@ -4,11 +4,10 @@
 #
 package ECAD::EN81346;
 
-require Exporter;
-our @ISA = qw(Exporter);
-our @EXPORT = qw(segments sort concat is_valid);
+use Exporter 'import';
+our @EXPORT_OK = qw(segments sort concat is_valid);
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use strict;
 use warnings;
@@ -164,9 +163,9 @@ This function adds the given subsegments by $subsegments_ref to the segment tree
 must be given as reference in $segments_ref.
 
     my $input_string = "==200=A1.23=100==ABC+200-300";
-    my %segments = ALX::EN81346::segments($input_string);
+    my %segments = ECAD::EN81346::segments($input_string);
     my @subsegments - ('ALX123', 'ALX8BB');
-    %identifier = ALX::EN81346::concat(\%segments, '=', \@subsegments);
+    %identifier = ECAD::EN81346::concat(\%segments, '=', \@subsegments);
 
 Results in the following segment string:
 
@@ -200,8 +199,8 @@ by the $segments reference. The string is ordered by the identifier and uses
 the dot notation for multi level identifier.
 
     my $input_string = "==200=A1.23=100==ABC+200-300";
-    my %identifier = ALX::EN81346::segments($input_string);
-    print(ALX::EN81346::to_string(\%identifier));
+    my %identifier = ECAD::EN81346::segments($input_string);
+    print(ECAD::EN81346::to_string(\%identifier));
 
 Will result in the following string:
 
@@ -214,7 +213,7 @@ As second parameter an optional identifier may be supplied. if this value is pro
 only the segment identified by this is returned as string.
 
     my $input_string = "==200=A1.23=100==ABC+200-300";
-    print(ALX::EN81346::to_string($input_string, '=='));
+    print(ECAD::EN81346::to_string($input_string, '=='));
 
 Will result in the following string:
 
@@ -242,6 +241,36 @@ sub to_string($;$) {
     return $string_representation;
 }
 
+=pod
+
+=head2 to_string2($;$)
+
+This function returns the string representation of the segment structure given
+by the $segments reference. The string is ordered by the identifier and uses
+the full notation for multi level identifier.
+
+    my $input_string = "==200=A1.23=100==ABC+200-300";
+    my %identifier = ECAD::EN81346::segments($input_string);
+    print(ECAD::EN81346::to_string2(\%identifier));
+
+Will result in the following string:
+
+    ==200==ABC=A1=23=100+200-300
+
+As parameter you may pass a hash reference to a segments hash as first parameter
+or alternative a string, which is internally converted to it's segments hash.
+
+As second parameter an optional identifier may be supplied. if this value is provided
+only the segment identified by this is returned as string.
+
+    my $input_string = "==200=A1.23=100==ABC+200-300";
+    print(ECAD::EN81346::to_string($input_string, '=='));
+
+Will result in the following string:
+
+    ==200==ABC
+=cut
+
 sub to_string2($;$) {
     my ($args, $identifier) = @_;
     my %segments;
@@ -262,6 +291,51 @@ sub to_string2($;$) {
     };
     return $string_representation;
 }
+
+=pod
+
+=head2 to_string3($;$)
+
+This function returns the string representation of the segment structure given
+by the $segments reference. The string is ordered by the identifier and uses
+a mixed notation for multi level identifier.
+
+The mixed notation means, that the dot notation is used, if the following level
+identifier only contains numbers. If it contains also letters, the full notation
+is used for the level.
+
+    my $input_string = "==200=A1.23=100==ABC+200-300";
+    my %identifier = ECAD::EN81346::segments($input_string);
+    print(ECAD::EN81346::to_string2(\%identifier));
+
+Will result in the following string:
+
+    ==200==ABC=A1.23=100+200-300
+
+As parameter you may pass a hash reference to a segments hash as first parameter
+or alternative a string, which is internally converted to it's segments hash.
+
+As second parameter an optional identifier may be supplied. if this value is provided
+only the segment identified by this is returned as string.
+
+    my $input_string = "==200=A1.23=100==ABC+200-300";
+    print(ECAD::EN81346::to_string($input_string, '=='));
+
+Will result in the following string:
+
+    ==200==ABC
+
+If we replace ABC with 123 the mixed mode recognizes the numerical part and uses the dot
+notation instead of the full notation.
+
+    my $input_string = "==200=A1.23=100==123+200-300";
+    print(ECAD::EN81346::to_string($input_string, '=='));
+
+Will result in the following string:
+
+    ==200.123
+
+=cut
 
 sub to_string3($;$) {
     my ($args, $identifier) = @_;
